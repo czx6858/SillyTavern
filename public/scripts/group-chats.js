@@ -1252,6 +1252,20 @@ function activateNaturalOrder(members, input, lastMessage, allowSelfResponses, i
 
     // find mentions (excluding self)
     if (input && input.length) {
+        const inputLower = input.toLowerCase();
+        for (let member of members) {
+            const character = characters.find(x => x.avatar === member);
+
+            if (!character || character.name === bannedUser) {
+                continue;
+            }
+
+            // Chinese names are not split by the word-boundary regex below, so match them as substrings.
+            if (/[\u3400-\u9FFF]/.test(character.name) && inputLower.includes(character.name.toLowerCase())) {
+                activatedMembers.push(member);
+            }
+        }
+
         for (let inputWord of extractAllWords(input)) {
             for (let member of members) {
                 const character = characters.find(x => x.avatar === member);
@@ -1265,6 +1279,15 @@ function activateNaturalOrder(members, input, lastMessage, allowSelfResponses, i
                     break;
                 }
             }
+        }
+
+        activatedMembers = activatedMembers.filter(onlyUnique);
+
+        if (activatedMembers.length) {
+            const memberIds = activatedMembers
+                .map((x) => characters.findIndex((y) => y.avatar === x))
+                .filter((x) => x !== -1);
+            return memberIds;
         }
     }
 
